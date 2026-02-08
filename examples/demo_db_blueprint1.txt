@@ -1,0 +1,50 @@
+DATA_BLOCK "DB_data_exchange"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 0.1
+NON_RETAIN
+   STRUCT 
+      bool_data0 : Bool;
+      bool_data1 : Bool;
+      bool_data2 : Bool;
+      bool_data3 : Bool;
+      bool_data4 : Bool;
+      bool_data5 : Bool;
+      bool_data6 : Bool;
+      bool_data7 : Bool;
+      bool_data8 : Bool;
+      bool_data9 : Bool;
+      bool_data10 : Bool;
+      bool_data11 : Bool;
+      bool_data12 : Bool;
+      bool_data13 : Bool;
+      bool_data14 : Bool;
+      bool_data15 : Bool;
+      bool_data16 : Bool;
+      bool_data17 : Bool;
+      bool_data18 : Bool;
+      byte_data0 : Byte;
+      byte_data1 : Byte;
+      byte_data2 : Byte;
+      byte_data3 : Byte;
+      int_data0 : Int;
+      int_data1 : Int;
+      int_data2 : Int;
+      int_data3 : Int;
+      int_data4 : Int;
+      word_data0 : Word;
+      word_data1 : Word;
+      word_data2 : Word;
+      word_data3 : Word;
+      word_data4 : Word;
+      real_data0 : Real;
+      real_data1 : Real;
+      real_data2 : Real;
+      real_data3 : Real;
+      real_data4 : Real;
+   END_STRUCT;
+
+
+BEGIN
+
+END_DATA_BLOCK
+
