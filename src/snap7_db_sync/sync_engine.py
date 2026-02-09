@@ -51,72 +51,104 @@ class Snap7DBSync:
         self._last_len = 0
 
         self.total_len, self.data_struct = self.parse_siemens_db(db_bluprint_txt)
-        print("Total length: ", self.total_len)
+        print("Total length: ", self.total_len, "Bytes")
         print("Data struct: ", self.data_struct)
+        print("Total variables: ", len(self.data_struct))
 
     # internal static helper methods
     @staticmethod
-    def parse_siemens_db(content):
+    def parse_siemens_db(content_path):
         """
-        Parses Siemens DB definitions from SCL or Table-copy formats.
+        Parses Siemens DB definitions in form of .txt file from SCL or Table-copy formats.
+        Supports:
+        1. SCL Exports: (DB-> right click -> Copy as text) with STRUCT/END_STRUCT
+        2. TIA Portal Table-copy (V16-V20): Inside DB select all and "ctrl+C" starting with 'Static'
         Handles automatic offset calculation and word-alignment rules for Standard (Non-Optimized) Data Blocks.
 
         :param content: str: Path to the blueprint text file.
         :return: A tuple of (total_byte_length, data_structure_dictionary).
         """
-        # Map Type -> (Size in Bytes, Alignment requirement)
-        # Alignment: 1=Byte boundary, 2=Word (even byte) boundary
         types = {
             'bool': (1, 0), 'byte': (1, 1), 'word': (2, 2), 'int': (2, 2),
             'dword': (4, 2), 'dint': (4, 2), 'real': (4, 2), 'time': (4, 2)
         }
 
-        data, byte_idx, bit_idx = {}, 0, 0
         try:
-            with open(content, 'r') as f:
+            with open(content_path, 'r') as f:
                 file_content = f.read()
         except Exception as e:
-            raise ValueError(f"Cannot read {content} ({e})")
+            raise ValueError(f"Could not read blueprint file: {e}")
 
-        is_scl = "DATA_BLOCK" in file_content  # Detect format based on
+        data = {}
 
-        # Unified Regex: Matches "Name : Type" (SCL) OR "Name Type Offset" (TIA)
-        # Group 1: Name, Group 2: Type, Group 3: Offset (Optional, TIA only)
-        pattern = r'^\s*(\w+)(?:\s*:\s*|\s+)([A-Za-z]+)(?:\s*;|\s+([\d\.]+))?'
+        # --- ENGINE A: SCL PARSER (STRUCT based) ---
+        if "STRUCT" in file_content:
+            # Isolate the content between STRUCT and END_STRUCT to ignore headers/footers [cite: 1, 36]
+            struct_match = re.search(r'STRUCT(.*?)END_STRUCT', file_content, re.DOTALL | re.IGNORECASE)
+            if struct_match:
+                relevant_content = struct_match.group(1)
+                # Pattern for 'Name : Type;' format [cite: 1]
+                pattern = r'^[ \t]*([a-zA-Z0-9_]+)\s*:\s*([a-zA-Z]+)\s*;'
 
-        for name, dtype, explicit_offset in re.findall(pattern, file_content, re.MULTILINE):
-            dtype_key = dtype.lower()
-            if dtype_key not in types: continue  # Skip unknown keywords (e.g. VERSION, STRUCT)
+                byte_idx, bit_idx = 0, 0
+                for name, dtype in re.findall(pattern, relevant_content, re.MULTILINE):
+                    dtype_key = dtype.lower()
+                    if dtype_key not in types: continue
 
-            size, align = types[dtype_key]
+                    size, align = types[dtype_key]
 
-            if explicit_offset:  # --- TIA COPY FORMAT (Format 2) ---
-                byte_idx, bit_idx = map(int, explicit_offset.split('.'))
+                    # SCL Alignment Logic [cite: 1]
+                    if dtype_key == 'bool':
+                        if bit_idx > 7:
+                            byte_idx += 1
+                            bit_idx = 0
+                    else:
+                        if bit_idx > 0:
+                            byte_idx += 1
+                            bit_idx = 0
+                        if align > 1 and byte_idx % 2 != 0:
+                            byte_idx += 1
 
-            else:  # --- SCL FORMAT (Format 1) ---
-                if dtype_key == 'bool':
-                    if bit_idx > 7:  # Byte overflow
-                        byte_idx += 1;
-                        bit_idx = 0
-                else:
-                    if bit_idx > 0:  # Finish previous bool byte
-                        byte_idx += 1;
-                        bit_idx = 0
-                    if align > 1 and byte_idx % 2 != 0:  # Word Alignment Padding
-                        byte_idx += 1
+                    data[name] = {'type': dtype, 'offset': byte_idx, 'bit': bit_idx, 'size': size}
 
-            # Store Data
-            data[name] = {'type': dtype, 'offset': byte_idx, 'bit': bit_idx, 'size': size}
+                    # Increment Counters for next iteration
+                    if dtype_key == 'bool':
+                        bit_idx += 1
+                    else:
+                        byte_idx += size
 
-            # Advance counters for SCL (or max size tracking for TIA)
-            if dtype_key == 'bool':
-                bit_idx += 1
-            elif not explicit_offset:  # Only advance byte automatically if SCL
-                byte_idx += size
+        # --- ENGINE B: TIA TABLE PARSER (Static based) ---
+        elif "Static" in file_content:
+            # Start parsing from the 'Static' keyword to skip any leading junk
+            static_index = file_content.find("Static")
+            relevant_content = file_content[static_index:]
 
-        # Calculate Total Size (Max byte + last element size)
+            # Pattern for 'Name Type Offset.Bit' format [cite: 34]
+            # Ignores shifting tabs and trailing comments automatically
+            pattern = r'^[ \t]*([a-zA-Z0-9_]+)[\s]+([a-zA-Z]+)[\s]+(\d+)\.(\d+)'
+
+            for name, dtype, off_byte, off_bit in re.findall(pattern, relevant_content, re.MULTILINE):
+                dtype_key = dtype.lower()
+                if dtype_key not in types: continue
+
+                data[name] = {
+                    'type': dtype,
+                    'offset': int(off_byte),
+                    'bit': int(off_bit),
+                    'size': types[dtype_key][0]
+                }
+
+        # --- FINAL VALIDATION & SIZE CALCULATION ---
+        if not data:
+            return 0, {}
+
+        # Calculate total DB length (highest offset + its size)
         last_item = max(data.values(), key=lambda x: x['offset'] + (0.1 * x['bit']))
         total_size = last_item['offset'] + (1 if last_item['type'].lower() == 'bool' else last_item['size'])
+
+        # Standard DBs always end on an even byte boundary
+        if total_size % 2 != 0:
+            total_size += 1
 
         return total_size, data
 
@@ -269,8 +301,9 @@ class Snap7DBSync:
             if self.shm is None:
                 self.shm = shared_memory.SharedMemory(create=True, size=self.shm_size, name=self.shm_name)
             self.client = snap7.client.Client()
-            time.sleep(1)
+            time.sleep(0.5)
             self.client.connect(self.ip_addr, self.rack, self.slot)
+            time.sleep(0.5)
             return bool(self.client.get_connected())
         except Exception as e:
             self._last_connect_error = e
@@ -280,8 +313,9 @@ class Snap7DBSync:
                 pass
             try:
                 self.client = snap7.client.Client()
-                time.sleep(1)
+                time.sleep(0.5)
                 self.client.connect(self.ip_addr, self.rack, self.slot)
+                time.sleep(0.5)
                 return bool(self.client.get_connected())
             except Exception as e:
                 self._last_connect_error = e
