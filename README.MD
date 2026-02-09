@@ -2,15 +2,15 @@
 A high-performance bridge to synchronize Siemens S7 PLC Data Blocks (DB) into Python Shared Memory (SHM).
 
 ## 🚀 Key Features
-Zero-Config Parser: Automatically calculates offsets and word-alignment from TIA Portal text exports (SCL or Table-copy).
+**Zero-Config Parser**: Automatically calculates offsets and word-alignment from TIA Portal text exports (SCL or Table-copy).
 
-Shared Memory IPC: Stores PLC data as a JSON string in a shared memory segment for fast access by other processes.
+**Shared Memory IPC**: Stores PLC data as a JSON string in a shared memory segment for fast access by other processes.
 
-Lifecycle Managed: Shared memory is only allocated when connect() is called and is cleaned up properly on exit.
+**Lifecycle Managed**: Shared memory is only allocated when connect() is called and is cleaned up properly on exit.
 
-Thread-Safe: Uses internal locking to prevent crashes during simultaneous PLC read/write operations.
+**Thread-Safe**: Uses internal locking to prevent crashes during simultaneous PLC read/write operations.
 
-#3 🎯 Ideal Use Cases
+## 🎯 Ideal Use Cases
 
 This library is engineered to bridge the gap between industrial hardware and modern data stacks. It is best suited for:
 
