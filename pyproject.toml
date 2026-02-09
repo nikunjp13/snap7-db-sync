@@ -1,6 +1,6 @@
 [project]
 name = "snap7-db-sync"
-version = "0.1.0"
+version = "0.1.1"
 description = "A high-performance bridge for syncing Siemens S7 DBs to Shared Memory"
 readme = "README.md"
 requires-python = ">=3.8"

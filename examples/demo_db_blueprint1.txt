@@ -3,8 +3,8 @@ DATA_BLOCK "DB_data_exchange"
 VERSION : 0.1
 NON_RETAIN
    STRUCT 
-      bool_data0 : Bool;
-      bool_data1 : Bool;
+      Power : Bool;
+      Power_ON : Bool;
       bool_data2 : Bool;
       bool_data3 : Bool;
       bool_data4 : Bool;
@@ -26,7 +26,7 @@ NON_RETAIN
       byte_data1 : Byte;
       byte_data2 : Byte;
       byte_data3 : Byte;
-      int_data0 : Int;
+      Release_valve : Int;
       int_data1 : Int;
       int_data2 : Int;
       int_data3 : Int;
@@ -36,7 +36,7 @@ NON_RETAIN
       word_data2 : Word;
       word_data3 : Word;
       word_data4 : Word;
-      real_data0 : Real;
+      Tank_level : Real;
       real_data1 : Real;
       real_data2 : Real;
       real_data3 : Real;

@@ -1,6 +1,6 @@
 	Static									
-	bool_data0	Bool	0.0	false	False	True	True	True	False	
-	bool_data1	Bool	0.1	false	False	True	True	True	False	
+	Power	Bool	0.0	false	False	True	True	True	False
+	Power_ON	Bool	0.1	false	False	True	True	True	False
 	bool_data2	Bool	0.2	false	False	True	True	True	False	
 	bool_data3	Bool	0.3	false	False	True	True	True	False	
 	bool_data4	Bool	0.4	false	False	True	True	True	False	
@@ -22,7 +22,7 @@
 	byte_data1	Byte	4.0	16#0	False	True	True	True	False	
 	byte_data2	Byte	5.0	16#0	False	True	True	True	False	
 	byte_data3	Byte	6.0	16#0	False	True	True	True	False	
-	int_data0	Int	8.0	0	False	True	True	True	False	
+	Release_valve	Int	8.0	0	False	True	True	True	False
 	int_data1	Int	10.0	0	False	True	True	True	False	
 	int_data2	Int	12.0	0	False	True	True	True	False	
 	int_data3	Int	14.0	0	False	True	True	True	False	
@@ -32,7 +32,7 @@
 	word_data2	Word	22.0	16#0	False	True	True	True	False	
 	word_data3	Word	24.0	16#0	False	True	True	True	False	
 	word_data4	Word	26.0	16#0	False	True	True	True	False	
-	real_data0	Real	28.0	0.0	False	True	True	True	False	
+	Tank_level	Real	28.0	0.0	False	True	True	True	False
 	real_data1	Real	32.0	0.0	False	True	True	True	False	
 	real_data2	Real	36.0	0.0	False	True	True	True	False	
 	real_data3	Real	40.0	0.0	False	True	True	True	False	
